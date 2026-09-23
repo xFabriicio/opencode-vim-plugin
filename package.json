@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@leohenon/opencode-vim-plugin",
-  "version": "0.1.6",
-  "description": "Vim mode plugin for OpenCode.",
+  "name": "@xfabriicio/opencode-vim-plugin",
+  "version": "0.2.0",
+  "description": "Vim prompt editing for OpenCode 2.",
   "keywords": [
     "opencode",
     "plugin",
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leohenon/opencode-vim-plugin.git"
+    "url": "git+https://github.com/xFabriicio/opencode-vim-plugin.git"
   },
   "bugs": {
-    "url": "https://github.com/leohenon/opencode-vim-plugin/issues"
+    "url": "https://github.com/xFabriicio/opencode-vim-plugin/issues"
   },
-  "homepage": "https://leohenon.github.io/opencode-vim/",
+  "homepage": "https://github.com/xFabriicio/opencode-vim-plugin",
   "publishConfig": {
     "access": "public"
   },
@@ -35,21 +35,25 @@
     "build": "bun run script/build.ts",
     "typecheck": "tsc --noEmit",
     "check:keymap": "bun run script/check-keymap.ts",
-    "check:adapter": "bun run script/check-adapter.ts",
+    "check:adapter": "bun run script/check-v2-plugin.ts",
     "check": "bun run typecheck && bun run test && bun run check:keymap && bun run build && bun run check:adapter",
     "prepack": "bun run check"
   },
   "engines": {
-    "opencode": ">=1.17.10"
+    "opencode": ">=2.0.0"
   },
   "peerDependencies": {
-    "@opencode-ai/plugin": ">=1.17.10",
-    "@opentui/core": ">=0.4.2",
-    "@opentui/keymap": ">=0.4.2",
-    "@opentui/solid": ">=0.4.2"
+    "@opencode/plugin": ">=2.0.0",
+    "@opencode/theme": ">=2.0.0",
+    "@opentui/core": ">=0.5.10",
+    "@opentui/keymap": ">=0.5.10",
+    "@opentui/solid": ">=0.5.10"
   },
   "peerDependenciesMeta": {
-    "@opencode-ai/plugin": {
+    "@opencode/plugin": {
+      "optional": true
+    },
+    "@opencode/theme": {
       "optional": true
     },
     "@opentui/core": {
@@ -63,12 +67,13 @@
     }
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "^1.17.10",
-    "@opentui/core": "^0.4.2",
-    "@opentui/keymap": "^0.4.2",
-    "@opentui/solid": "^0.4.2",
+    "@opencode/plugin": "2.0.15",
+    "@opencode/theme": "2.0.15",
+    "@opentui/core": "0.5.10",
+    "@opentui/keymap": "0.5.10",
+    "@opentui/solid": "0.5.10",
     "@types/bun": "latest",
-    "solid-js": "1.9.12",
+    "solid-js": "1.9.15",
     "typescript": "^5.9.0"
   }
 }

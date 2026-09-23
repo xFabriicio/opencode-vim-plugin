@@ -1,10 +1,14 @@
 /** @jsxImportSource @opentui/solid */
 
-import type { KeyEvent, Renderable, TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plugin/tui"
+import { Plugin } from "@opencode/plugin/tui"
+import type { KeyEvent, Renderable } from "@opentui/core"
 import { TextAttributes } from "@opentui/core"
 import type { Binding, KeyLike } from "@opentui/keymap"
 import { createEffect, createSignal, Show, type Accessor } from "solid-js"
 import { createPromptVim } from "./prompt-vim"
+import { createV2Adapter } from "./v2-adapter"
+
+type TuiPluginApi = any
 
 const PLUGIN_ID = "ocv-plugin"
 const COMMAND_TOGGLE = "ocv-plugin.toggle"
@@ -328,7 +332,7 @@ function Status(props: {
   )
 }
 
-const tui: TuiPlugin = async (api, rawOptions) => {
+const tui = (api: TuiPluginApi, rawOptions: unknown) => {
   const options = readOptions(rawOptions)
   const initialEnabled = api.kv.get(KV_ENABLED, options.enabled)
   const [enabled, setEnabled] = createSignal(initialEnabled)
@@ -449,9 +453,11 @@ const tui: TuiPlugin = async (api, rawOptions) => {
   })
 }
 
-const plugin: TuiPluginModule & { id: string } = {
+export default Plugin.define({
   id: PLUGIN_ID,
-  tui,
-}
-
-export default plugin
+  setup(context) {
+    const adapter = createV2Adapter(context)
+    void tui(adapter.api, context.options)
+    return adapter.dispose
+  },
+})
