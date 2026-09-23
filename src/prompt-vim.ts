@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import type { KeyEvent, Renderable, TuiPluginApi } from "@opencode-ai/plugin/tui"
+import type { KeyEvent, Renderable } from "@opentui/core"
 import type { Binding, CommandContext, KeyLike } from "@opentui/keymap"
 import { RGBA, type TextareaRenderable } from "@opentui/core"
 import { createVimHandler } from "./vim/handler"
@@ -7,6 +7,7 @@ import { useVimIndicator } from "./vim/indicator"
 import { createVimState, type VimMode, type VimRegister } from "./vim/state"
 
 type VimContext = CommandContext<Renderable, KeyEvent>
+type TuiPluginApi = any
 
 const PROMPT_RENDER_PATCH = Symbol("ocv-plugin.prompt.render.patch")
 
