@@ -2,7 +2,8 @@ import { spawnSync } from "node:child_process"
 import type { KeyEvent, Renderable } from "@opentui/core"
 import type { Binding, CommandContext, KeyLike } from "@opentui/keymap"
 import { RGBA, type TextareaRenderable } from "@opentui/core"
-import { createVimHandler } from "./vim/handler"
+import { createVimHandler, type VimEvent } from "./vim/handler"
+import { dispatchRemap } from "./vim/remap"
 import { useVimIndicator } from "./vim/indicator"
 import { createVimState, type VimMode, type VimRegister } from "./vim/state"
 
@@ -210,6 +211,9 @@ const normalKeys: KeyLike[] = [
   "v",
   "shift+v",
   "shift+j",
+  "shift+k",
+  "alt+j",
+  "alt+k",
   "z",
   "slash",
   "shift+slash",
@@ -343,6 +347,8 @@ export function createPromptVim(
     systemClipboardRegister?: boolean
     langmap?: () => Record<string, string> | undefined
     vimEscapeSequence?: string
+    normalRemaps?: Record<string, string>
+    visualRemaps?: Record<string, string>
   },
 ) {
   let lastPromptEditor: TextareaLike | undefined
@@ -643,6 +649,12 @@ export function createPromptVim(
     vimEscapeSequence: input.vimEscapeSequence,
   })
 
+  function remap(event: VimEvent & { option?: boolean }) {
+    const mode = state.mode()
+    const mapping = mode === "normal" ? input.normalRemaps : mode === "visual" || mode === "visual-line" ? input.visualRemaps : undefined
+    return dispatchRemap(event, mapping, state.pending(), handler.handleKey)
+  }
+
   onPromptEditorChange = (previous) => {
     const mode = state.mode()
     if (previous && (mode === "visual" || mode === "visual-line") && !previous.isDestroyed) previous.clearSelection()
@@ -692,7 +704,7 @@ export function createPromptVim(
           applyCursorStyle()
           return true
         }
-        const handled = handler.handleKey(event)
+        const handled = remap(event) || handler.handleKey(event)
         applyCursorStyle()
         if (handled) ctx.event.stopPropagation()
         return handled

@@ -2,8 +2,14 @@
 
 import { createRoot } from "solid-js"
 import { RGBA } from "@opentui/core"
+import path from "node:path"
+import { pathToFileURL } from "node:url"
 
-const plugin = (await import("../dist/tui.js" as string)).default as {
+// OpenCode 2.0.15 resolves local directories as <directory>/tui, not
+// through package.json exports. Exercise that path before testing setup.
+const root = path.resolve(import.meta.dir, "..")
+const entrypoint = Bun.resolveSync(path.join(root, "tui"), root)
+const plugin = (await import(pathToFileURL(entrypoint).href)).default as {
   id: string
   setup: (context: any) => void | (() => void) | Promise<void | (() => void)>
 }
@@ -18,6 +24,7 @@ assert(typeof plugin.setup === "function", "the V2 TUI plugin must expose setup(
 const layers: Array<() => any> = []
 const slots: any[] = []
 const toasts: any[] = []
+let mounted = false
 const editor: any = {
   plainText: "abc",
   cursorOffset: 0,
@@ -57,6 +64,7 @@ const context = {
   },
   keymap: {
     layer(input: () => any) {
+      assert(mounted, "keymap layers must be registered inside the app slot, not during setup")
       layers.push(input)
     },
     dispatch() {},
@@ -73,10 +81,16 @@ const context = {
 }
 
 let dispose = () => {}
+let unmount = () => {}
+const cleanup = await plugin.setup(context)
+if (typeof cleanup === "function") dispose = cleanup
+assert(layers.length === 0, "setup must defer keymap registration until the app is mounted")
+const app = slots.find((slot) => slot.append === "app")
+assert(app, "the Vim integration must mount inside the host app tree")
 createRoot((close) => {
-  const cleanup = plugin.setup(context)
-  if (typeof cleanup === "function") dispose = cleanup
-  close()
+  unmount = close
+  mounted = true
+  app.render()
 })
 
 const resolved = layers.map((layer) => layer())
@@ -108,5 +122,6 @@ right?.run(undefined, event)
 assert(editor.cursorOffset === 1, "the V2 keymap binding must deliver its event to the Vim motion engine")
 assert(propagationStopped, "handled Vim key events must stop propagating to host bindings")
 
+unmount()
 dispose()
 console.log(`ok: OpenCode 2 TUI plugin adapter (${layers.length} keymap layers, ${slots.length} slot)`)

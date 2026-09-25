@@ -27,6 +27,7 @@
     "./tui": "./dist/tui.js"
   },
   "files": [
+    "tui.js",
     "dist",
     "README.md"
   ],

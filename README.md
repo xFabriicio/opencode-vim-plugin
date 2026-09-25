@@ -13,7 +13,7 @@ Adds Vim editing to the OpenCode prompt, including motions, operators, text obje
 Clone and build the fork:
 
 ```bash
-git clone https://github.com/xFabriicio/opencode-vim-plugin.git
+git clone --branch feat/opencode-v2-tui-api https://github.com/xFabriicio/opencode-vim-plugin.git
 cd opencode-vim-plugin
 bun install
 bun run build
@@ -35,6 +35,11 @@ Add the absolute path to the repository in `~/.config/opencode/cli.json` (`%USER
 
 > [!IMPORTANT]
 > Requires OpenCode 2.0.0 or newer.
+
+Keep the root `tui.js` alongside `dist/`: OpenCode 2.0.15 resolves local
+directories through `<directory>/tui` rather than the package's `exports` map.
+After building, `bun run check:adapter` checks this discovery path as well as
+the plugin setup. Configure this CLI-only plugin in `cli.json`.
 
 ## Usage
 
@@ -112,6 +117,8 @@ For options beginning with `vim_`, the prefix may be omitted in plugin configura
 | `vim_enter_submit`              | Submit with Enter from insert mode            |
 | `vim_insert_after_submit`       | Return to insert mode after submit            |
 | `vim_system_clipboard_register` | Use the system clipboard as Vim register      |
+| `vim_normal_remaps`             | Non-recursive prompt normal-mode key sequences (e.g. `{"J":"10j","alt+j":"5j","R":"ctrl+r"}`) |
+| `vim_visual_remaps`             | Non-recursive prompt visual-mode key sequences (e.g. `{"J":"10j"}`) |
 | `vim_langmap`                   | Map non-English keys or simple aliases        |
 | `vim_normal_leader`             | Leader key for normal keybinds                |
 | `normal_keybinds`               | Extra keybinds active only in Vim normal mode |

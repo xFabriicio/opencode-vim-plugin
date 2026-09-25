@@ -4,7 +4,7 @@ import { Plugin } from "@opencode/plugin/tui"
 import type { KeyEvent, Renderable } from "@opentui/core"
 import { TextAttributes } from "@opentui/core"
 import type { Binding, KeyLike } from "@opentui/keymap"
-import { createEffect, createSignal, Show, type Accessor } from "solid-js"
+import { createEffect, createSignal, onCleanup, Show, type Accessor } from "solid-js"
 import { createPromptVim } from "./prompt-vim"
 import { createV2Adapter } from "./v2-adapter"
 
@@ -30,6 +30,8 @@ type Options = {
   vimEscapeSequence?: string
   normalLeader?: string
   normalBindings: NormalBinding[]
+  normalRemaps?: Record<string, string>
+  visualRemaps?: Record<string, string>
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -287,6 +289,11 @@ function readOptions(input: unknown): Options {
   const vimEscapeSequence = escapeSequenceInput?.length === 2 ? escapeSequenceInput : undefined
   const keybinds = isRecord(options.keybinds) && isRecord(options.keybinds["vim.normal"]) ? options.keybinds["vim.normal"] : undefined
   const normalLeader = nonEmptyString(options.normal_leader) ?? nonEmptyString(options.vim_normal_leader) ?? nonEmptyString(keybinds?.leader)
+  const remaps = (value: unknown) => isRecord(value)
+    ? Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] =>
+        typeof entry[1] === "string" && (/^[0-9a-zA-Z$^_]+$/.test(entry[1]) || entry[1] === "ctrl+r"),
+      ))
+    : undefined
   return {
     enabled,
     initialMode,
@@ -299,6 +306,8 @@ function readOptions(input: unknown): Options {
     vimEscapeSequence,
     normalLeader,
     normalBindings: readNormalBindings(options, normalLeader),
+    normalRemaps: remaps(options.vim_normal_remaps),
+    visualRemaps: remaps(options.vim_visual_remaps),
   }
 }
 
@@ -344,6 +353,8 @@ const tui = (api: TuiPluginApi, rawOptions: unknown) => {
     systemClipboardRegister: options.systemClipboardRegister,
     langmap: () => options.langmap,
     vimEscapeSequence: options.vimEscapeSequence,
+    normalRemaps: options.normalRemaps,
+    visualRemaps: options.visualRemaps,
   })
   api.lifecycle.onDispose(prompt.dispose)
 
@@ -456,8 +467,16 @@ const tui = (api: TuiPluginApi, rawOptions: unknown) => {
 export default Plugin.define({
   id: PLUGIN_ID,
   setup(context) {
-    const adapter = createV2Adapter(context)
-    void tui(adapter.api, context.options)
-    return adapter.dispose
+    // setup runs outside the host's Keymap.Provider. Mount the keyboard
+    // integration in the app tree so layers inherit the host input context.
+    return context.ui.slot({
+      append: "app",
+      render() {
+        const adapter = createV2Adapter(context)
+        onCleanup(adapter.dispose)
+        tui(adapter.api, context.options)
+        return null
+      },
+    })
   },
 })
